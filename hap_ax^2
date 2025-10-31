@@ -1,0 +1,562 @@
+# 2025-10-31 10:08:25 by RouterOS 7.20.1
+# software id = 9T4E-B1C1
+#
+# model = C52iG-5HaxD2HaxD
+# serial number = HJ70A4XADG0
+/interface bridge
+add name=Guest-Network port-cost-mode=short
+add dhcp-snooping=yes igmp-snooping=yes name=Intale-Point port-cost-mode=\
+    short
+add admin-mac=74:4D:28:8B:DE:21 auto-mac=no name=Private-Lan port-cost-mode=\
+    short
+/interface ethernet
+set [ find default-name=ether1 ] l2mtu=1598 name=Internet
+set [ find default-name=ether2 ] l2mtu=1598
+set [ find default-name=ether3 ] l2mtu=1598
+set [ find default-name=ether4 ] l2mtu=1598
+set [ find default-name=ether5 ] l2mtu=1598
+/interface wireguard
+add comment=back-to-home-vpn listen-port=20303 mtu=1420 name=back-to-home-vpn
+/interface ethernet switch
+set 0 cpu-flow-control=yes
+/interface ethernet switch port
+set 0 default-vlan-id=auto
+set 1 default-vlan-id=auto
+set 2 default-vlan-id=auto
+set 3 default-vlan-id=auto
+set 4 default-vlan-id=auto
+set 5 default-vlan-id=auto
+/interface list
+add name=WAN
+add name=LAN
+add name=ZeroTier
+/interface lte apn
+set [ find default=yes ] ip-type=ipv4 use-network-apn=no
+/interface wifi configuration
+add country=Greece datapath.bridge=Guest-Network .client-isolation=yes \
+    disabled=no mode=ap name=cafe-exohi ssid=cafe-exohi
+/interface wifi security
+add authentication-types=wpa2-psk disabled=no encryption=\
+    ccmp,gcmp,ccmp-256,gcmp-256 name=security
+/interface wifi configuration
+add channel.skip-dfs-channels=all country=Greece datapath.bridge=Private-Lan \
+    disabled=no mode=ap name=Mikrotik security=security \
+    security.authentication-types=wpa2-psk .encryption=tkip ssid=Mikrotik
+add country=Greece datapath.bridge=Intale-Point disabled=no mode=ap name=\
+    Intale-Point security=security security.authentication-types=wpa2-psk \
+    .encryption=tkip ssid=Intale-Point
+/ip hotspot profile
+set [ find default=yes ] html-directory=flash/hotspot
+/ip ipsec proposal
+set [ find default=yes ] auth-algorithms=sha256 enc-algorithms=aes-256-cbc
+/ip pool
+add name=Private-Lan ranges=192.168.88.129-192.168.88.239
+add name=Guest-Network ranges=192.168.2.100-192.168.2.199
+add name=Intale-Point ranges=192.168.10.200-192.168.10.250
+/ip dhcp-server
+add add-arp=yes address-pool=Private-Lan always-broadcast=yes interface=\
+    Private-Lan lease-time=10m name=Private-Lan
+add add-arp=yes address-pool=Guest-Network always-broadcast=yes interface=\
+    Guest-Network lease-time=10m name=Guest-Network
+add add-arp=yes address-pool=Intale-Point always-broadcast=yes interface=\
+    Intale-Point lease-time=10m name=Intale-Point
+/ip smb users
+set [ find default=yes ] disabled=yes
+/ppp profile
+set *0 change-tcp-mss=default use-ipv6=default
+/queue type
+add kind=pcq name=pcq-download-guest pcq-classifier=dst-address pcq-rate=10M
+add kind=pcq name=pcq-upload-guest pcq-classifier=src-address pcq-rate=10M
+/routing bgp template
+set default disabled=no output.network=bgp-networks
+/routing ospf instance
+add disabled=no name=default-v2
+add disabled=no name=default-v3 version=3
+/routing ospf area
+add disabled=yes instance=default-v2 name=backbone-v2
+add disabled=yes instance=default-v3 name=backbone-v3
+/routing rip instance
+add name=rip-instance-4 route-gc-timeout=120 route-timeout=180 routing-table=\
+    main update-interval=30
+/system logging action
+set 1 disk-file-name=flash/log
+/zerotier
+set zt1 disabled=no disabled=no
+/zerotier interface
+add allow-default=yes allow-global=yes allow-managed=yes disabled=no \
+    instance=zt1 name=Syndicate network=d5e5fb653729bb5b
+/certificate settings
+set builtin-trust-anchors=not-trusted
+/interface bridge port
+add bridge=Private-Lan ingress-filtering=no interface=ether3 \
+    internal-path-cost=10 path-cost=10
+add bridge=Intale-Point ingress-filtering=no interface=ether4 \
+    internal-path-cost=10 path-cost=10
+add bridge=Private-Lan ingress-filtering=no interface=ether5 \
+    internal-path-cost=10 path-cost=10
+add bridge=Private-Lan interface=ether2 internal-path-cost=10 path-cost=10
+/ip firewall connection tracking
+set udp-timeout=10s
+/ip neighbor discovery-settings
+set discover-interface-list=LAN
+/ip settings
+set max-neighbor-entries=8192
+/ipv6 settings
+set disable-ipv6=yes max-neighbor-entries=8192
+/interface detect-internet
+set detect-interface-list=all
+/interface l2tp-server server
+set allow-fast-path=yes authentication=mschap1,mschap2 default-profile=\
+    default keepalive-timeout=disabled max-sessions=5 use-ipsec=required
+/interface list member
+add interface=Internet list=WAN
+add interface=Intale-Point list=LAN
+add interface=Guest-Network list=LAN
+add interface=Private-Lan list=LAN
+add interface=Syndicate list=LAN
+/interface sstp-server server
+set port=4433
+/interface wifi access-list
+add action=accept allow-signal-out-of-range=always disabled=no interface=all \
+    signal-range=-70..120
+add action=reject allow-signal-out-of-range=always disabled=no interface=all \
+    signal-range=-120..-71
+/interface wifi cap
+set certificate=WiFi-CAPsMAN-F41E57D47C66 discovery-interfaces=all enabled=\
+    yes lock-to-caps-man=yes
+/interface wifi capsman
+set ca-certificate=WiFi-CAPsMAN-CA-F41E57D47C66 certificate=\
+    WiFi-CAPsMAN-F41E57D47C66 enabled=yes interfaces=all package-path="" \
+    require-peer-certificate=yes upgrade-policy=none
+/interface wifi provisioning
+add action=create-dynamic-enabled common-name-regexp="" disabled=no \
+    master-configuration=Mikrotik name-format=Mikrotik supported-bands=\
+    5ghz-n,5ghz-ac
+add action=create-dynamic-enabled disabled=no master-configuration=\
+    Intale-Point name-format=Intale-Point slave-configurations=cafe-exohi \
+    slave-name-format=Cafe-Exohi supported-bands=2ghz-n,2ghz-n
+/ip address
+add address=192.168.2.1/24 interface=Guest-Network network=192.168.2.0
+add address=192.168.88.254/25 interface=Private-Lan network=192.168.88.128
+add address=192.168.10.1/24 interface=Intale-Point network=192.168.10.0
+/ip cloud
+set back-to-home-vpn=enabled ddns-enabled=yes ddns-update-interval=10m
+/ip cloud back-to-home-user
+add allow-lan=yes comment="cafe-exohi | C52iG-5HaxD2HaxD" name=\
+    "Redmi Note 11 NFC" private-key=\
+    "GK5rfhIA2rfm0kXefP1kK0g/Dhwhi8+Dg0XxUOttN18=" public-key=\
+    "R4LYPO1spL7JwR9xWoq8hVIfE1ZzczuHX7wSq+06K1c="
+add allow-lan=yes comment="cafe-exohi | hAP ax^2" file-access=full name=\
+    "Redmi Note 11 NFC" private-key=\
+    "EJiULEhyMi9ofHyWx6ygO/wy74k9NIygoT0n6RLYWVw=" public-key=\
+    "2TlQM66viS7R9gUQvCq8J977eM5HOE5g0UYNQcwVngU="
+/ip dhcp-client
+add interface=Internet
+/ip dhcp-server lease
+add address=192.168.88.241 comment=TVT mac-address=00:18:AE:70:7E:94 server=\
+    Private-Lan
+/ip dhcp-server network
+add address=192.168.2.0/24 dns-server=1.1.1.1 gateway=192.168.2.1
+add address=192.168.10.0/24 dns-server=1.1.1.1,8.8.8.8,8.8.4.4 gateway=\
+    192.168.10.1 netmask=24
+add address=192.168.88.128/25 dns-server=1.1.1.1,8.8.8.8 gateway=\
+    192.168.88.254
+/ip dns
+set allow-remote-requests=yes servers=8.8.8.8,8.8.4.4
+/ip firewall address-list
+add address=192.168.88.128/25 list=Private-Lan
+add address=192.168.2.0/24 list=Guest
+add address=127.0.0.0/8 comment="defconf: RFC6890" list=bad_ipv4
+add address=192.0.0.0/24 comment="defconf: RFC6890" list=bad_ipv4
+add address=192.0.2.0/24 comment="defconf: RFC6890 documentation" list=\
+    bad_ipv4
+add address=198.51.100.0/24 comment="defconf: RFC6890 documentation" list=\
+    bad_ipv4
+add address=203.0.113.0/24 comment="defconf: RFC6890 documentation" list=\
+    bad_ipv4
+add address=240.0.0.0/4 comment="defconf: RFC6890 reserved" list=bad_ipv4
+add address=0.0.0.0/8 comment="defconf: RFC6890" list=not_global_ipv4
+add address=10.0.0.0/8 comment="defconf: RFC6890" list=not_global_ipv4
+add address=100.64.0.0/10 comment="defconf: RFC6890" list=not_global_ipv4
+add address=169.254.0.0/16 comment="defconf: RFC6890" list=not_global_ipv4
+add address=172.16.0.0/12 comment="defconf: RFC6890" list=not_global_ipv4
+add address=192.0.0.0/29 comment="defconf: RFC6890" list=not_global_ipv4
+add address=192.168.0.0/16 comment="defconf: RFC6890" list=not_global_ipv4
+add address=198.18.0.0/15 comment="defconf: RFC6890 benchmark" list=\
+    not_global_ipv4
+add address=255.255.255.255 comment="defconf: RFC6890" list=not_global_ipv4
+add address=224.0.0.0/4 comment="defconf: multicast" list=bad_src_ipv4
+add address=255.255.255.255 comment="defconf: RFC6890" list=bad_src_ipv4
+add address=0.0.0.0/8 comment="defconf: RFC6890" list=bad_dst_ipv4
+add address=224.0.0.0/4 comment="defconf: RFC6890" list=bad_dst_ipv4
+add address=192.168.88.0/25 list=Private_Blocks
+add address=192.168.122.0/24 list=Private_Blocks
+add address=192.168.8.0/25 list=Private_Blocks
+add address=192.168.50.0/24 list=Private_Blocks
+add address=192.168.88.128/25 list=Private_Blocks
+add address=192.168.8.128/25 list=Modems
+add address=192.168.10.0/24 list=Intale
+add address=192.168.51.0/24 list=Private_Blocks
+add address=192.168.8.0/25 list=Modems
+/ip firewall filter
+add action=accept chain=forward in-interface-list=ZeroTier
+add action=accept chain=input in-interface-list=ZeroTier
+add action=accept chain=input comment=\
+    "accept to local loopback (for CAPsMAN)" dst-address=127.0.0.1
+add action=accept chain=input comment="accept established,related" \
+    connection-state=established,related
+add action=fasttrack-connection chain=forward comment=\
+    "fast-track for established,related" connection-state=established,related \
+    hw-offload=yes
+add action=accept chain=input comment="allow ICMP" in-interface-list=WAN \
+    protocol=icmp
+add action=accept chain=forward comment="accept established,related" \
+    connection-state=established,related
+add action=drop chain=forward connection-state=invalid
+add action=drop chain=forward comment=\
+    "drop access to clients behind NAT from WAN" connection-nat-state=!dstnat \
+    connection-state=new in-interface-list=WAN
+add action=accept chain=input comment="defconf: accept ICMP after RAW" \
+    protocol=icmp
+add action=accept chain=input comment=\
+    "defconf: accept established,related,untracked" connection-state=\
+    established,related,untracked
+add action=accept chain=forward comment=\
+    "defconf: accept all that matches IPSec policy" ipsec-policy=in,ipsec
+add action=drop chain=input in-interface-list=!LAN
+add action=fasttrack-connection chain=forward comment="defconf: fasttrack" \
+    connection-state=established,related hw-offload=yes
+add action=accept chain=forward comment=\
+    "defconf: accept established,related, untracked" connection-state=\
+    established,related,untracked
+add action=drop chain=forward comment="defconf: drop invalid" \
+    connection-state=invalid
+add action=drop chain=forward comment=\
+    "defconf:  drop all from WAN not DSTNATed" connection-nat-state=!dstnat \
+    connection-state=new in-interface-list=WAN
+add action=drop chain=forward comment="defconf: drop bad forward IPs" \
+    src-address-list=no_forward_ipv4
+add action=drop chain=forward out-interface-list=LAN src-address-list=Intale
+add action=drop chain=forward comment="defconf: drop bad forward IPs" \
+    dst-address-list=no_forward_ipv4
+add action=drop chain=forward out-interface-list=LAN src-address-list=Guest
+add action=drop chain=forward dst-address-list=Modems src-address-list=Guest
+add action=drop chain=forward dst-address-list=Modems src-address-list=Intale
+add action=drop chain=input connection-state=invalid
+add action=drop chain=input comment="block everything else" \
+    in-interface-list=WAN
+/ip firewall nat
+add action=masquerade chain=srcnat comment="masquerade Local networks" \
+    out-interface-list=WAN
+add action=accept chain=srcnat comment=\
+    "defconf: accept all that matches IPSec policy" ipsec-policy=out,ipsec
+/ip firewall raw
+add action=accept chain=prerouting comment=\
+    "defconf: enable for transparent firewall"
+add action=accept chain=prerouting comment="defconf: accept DHCP discover" \
+    dst-address=255.255.255.255 dst-port=67 in-interface-list=LAN protocol=\
+    udp src-address=0.0.0.0 src-port=68
+add action=drop chain=prerouting comment="defconf: drop bogon IP's" \
+    src-address-list=bad_ipv4
+add action=drop chain=prerouting comment="defconf: drop bogon IP's" \
+    dst-address-list=bad_ipv4
+add action=drop chain=prerouting comment="defconf: drop bogon IP's" \
+    src-address-list=bad_src_ipv4
+add action=drop chain=prerouting comment="defconf: drop bogon IP's" \
+    dst-address-list=bad_dst_ipv4
+add action=drop chain=prerouting comment="defconf: drop non global from WAN" \
+    in-interface-list=WAN src-address-list=not_global_ipv4
+add action=drop chain=prerouting comment=\
+    "defconf: drop forward to local lan from WAN" dst-address-list=Local \
+    in-interface-list=WAN
+add action=drop chain=prerouting comment=\
+    "defconf: drop forward to local lan from WAN" dst-address-list=Guest \
+    in-interface-list=WAN
+add action=drop chain=prerouting comment=\
+    "defconf: drop forward to local lan from WAN" dst-address-list=Intale \
+    in-interface-list=WAN
+add action=drop chain=prerouting comment=\
+    "defconf: drop local if not from default IP range" in-interface-list=LAN \
+    src-address-list=!Local
+add action=drop chain=prerouting comment=\
+    "defconf: drop local if not from default IP range" in-interface-list=LAN \
+    src-address-list=!Guest
+add action=drop chain=prerouting comment=\
+    "defconf: drop local if not from default IP range" in-interface-list=LAN \
+    src-address-list=!Intale
+add action=drop chain=prerouting comment="defconf: drop bad UDP" port=0 \
+    protocol=udp
+add action=jump chain=prerouting comment="defconf: jump to ICMP chain" \
+    jump-target=icmp4 protocol=icmp
+add action=jump chain=prerouting comment="defconf: jump to TCP chain" \
+    jump-target=bad_tcp protocol=tcp
+add action=accept chain=prerouting comment=\
+    "defconf: accept everything else from LAN" in-interface-list=LAN
+add action=accept chain=prerouting comment=\
+    "defconf: accept everything else from WAN" in-interface-list=WAN
+add action=drop chain=prerouting comment="defconf: drop the rest"
+add action=drop chain=bad_tcp comment="defconf: TCP flag filter" protocol=tcp \
+    tcp-flags=!fin,!syn,!rst,!ack
+add action=drop chain=bad_tcp comment=defconf protocol=tcp tcp-flags=fin,syn
+add action=drop chain=bad_tcp comment=defconf protocol=tcp tcp-flags=fin,rst
+add action=drop chain=bad_tcp comment=defconf protocol=tcp tcp-flags=fin,!ack
+add action=drop chain=bad_tcp comment=defconf protocol=tcp tcp-flags=fin,urg
+add action=drop chain=bad_tcp comment=defconf protocol=tcp tcp-flags=syn,rst
+add action=drop chain=bad_tcp comment=defconf protocol=tcp tcp-flags=rst,urg
+add action=drop chain=bad_tcp comment="defconf: TCP port 0 drop" port=0 \
+    protocol=tcp
+add action=accept chain=icmp4 comment="defconf: echo reply" icmp-options=0:0 \
+    limit=5,10:packet protocol=icmp
+add action=accept chain=icmp4 comment="defconf: net unreachable" \
+    icmp-options=3:0 protocol=icmp
+add action=accept chain=icmp4 comment="defconf: host unreachable" \
+    icmp-options=3:1 protocol=icmp
+add action=accept chain=icmp4 comment="defconf: protocol unreachable" \
+    icmp-options=3:2 protocol=icmp
+add action=accept chain=icmp4 comment="defconf: port unreachable" \
+    icmp-options=3:3 protocol=icmp
+add action=accept chain=icmp4 comment="defconf: fragmentation needed" \
+    icmp-options=3:4 protocol=icmp
+add action=accept chain=icmp4 comment="defconf: echo" icmp-options=8:0 limit=\
+    5,10:packet protocol=icmp
+add action=accept chain=icmp4 comment="defconf: time exceeded " icmp-options=\
+    11:0-255 protocol=icmp
+add action=drop chain=icmp4 comment="defconf: drop other icmp" protocol=icmp
+/ip firewall service-port
+set rtsp disabled=no
+/ip ipsec profile
+set [ find default=yes ] dh-group=modp2048 dpd-interval=2m \
+    dpd-maximum-failures=5 enc-algorithm=aes-256 hash-algorithm=sha256
+/ip service
+set ftp disabled=yes
+set ssh address=192.168.88.0/25,192.168.88.128/25,192.168.51.0/24
+set telnet disabled=yes
+set www disabled=yes
+set winbox address=192.168.88.0/25,192.168.88.128/25,192.168.51.0/24
+set api disabled=yes
+set api-ssl disabled=yes
+/ip smb shares
+set [ find default=yes ] directory=/flash/pub
+/ip ssh
+set strong-crypto=yes
+/ip upnp
+set show-dummy-rule=no
+/ipv6 firewall address-list
+add address=::/128 comment="defconf: unspecified address" list=bad_ipv6
+add address=::1/128 comment="defconf: lo" list=bad_ipv6
+add address=fec0::/10 comment="defconf: site-local" list=bad_ipv6
+add address=::ffff:0.0.0.0/96 comment="defconf: ipv4-mapped" list=bad_ipv6
+add address=::/96 comment="defconf: ipv4 compat" list=bad_ipv6
+add address=100::/64 comment="defconf: discard only " list=bad_ipv6
+add address=2001:db8::/32 comment="defconf: documentation" list=bad_ipv6
+add address=2001:10::/28 comment="defconf: ORCHID" list=bad_ipv6
+add address=3ffe::/16 comment="defconf: 6bone" list=bad_ipv6
+add address=::224.0.0.0/100 comment="defconf: other" list=bad_ipv6
+add address=::127.0.0.0/104 comment="defconf: other" list=bad_ipv6
+add address=::/104 comment="defconf: other" list=bad_ipv6
+add address=::255.0.0.0/104 comment="defconf: other" list=bad_ipv6
+add address=fe80::/10 comment="defconf: RFC6890 Linked-Scoped Unicast" list=\
+    no_forward_ipv6
+add address=ff00::/8 comment="defconf: multicast" list=no_forward_ipv6
+add address=2001::/23 comment="defconf: RFC6890" list=bad_ipv6
+add address=100::/64 comment="defconf: RFC6890 Discard-only" list=\
+    not_global_ipv6
+add address=2001::/32 comment="defconf: RFC6890 TEREDO" list=not_global_ipv6
+add address=2001:2::/48 comment="defconf: RFC6890 Benchmark" list=\
+    not_global_ipv6
+add address=fc00::/7 comment="defconf: RFC6890 Unique-Local" list=\
+    not_global_ipv6
+add address=::/128 comment="defconf: unspecified" list=bad_dst_ipv6
+add address=::/128 comment="defconf: unspecified" list=bad_src_ipv6
+add address=ff00::/8 comment="defconf: multicast" list=bad_src_ipv6
+/ipv6 firewall filter
+add action=accept chain=input comment=\
+    "defconf: accept established,related,untracked" connection-state=\
+    established,related,untracked
+add action=drop chain=input comment="defconf: drop invalid" connection-state=\
+    invalid
+add action=accept chain=input comment="defconf: accept ICMPv6" protocol=\
+    icmpv6
+add action=accept chain=input comment="defconf: accept UDP traceroute" port=\
+    33434-33534 protocol=udp
+add action=accept chain=input comment=\
+    "defconf: accept DHCPv6-Client prefix delegation." dst-port=546 protocol=\
+    udp src-address=fe80::/10
+add action=accept chain=input comment="defconf: accept IKE" dst-port=500,4500 \
+    protocol=udp
+add action=accept chain=input comment="defconf: accept ipsec AH" protocol=\
+    ipsec-ah
+add action=accept chain=input comment="defconf: accept ipsec ESP" protocol=\
+    ipsec-esp
+add action=accept chain=input comment=\
+    "defconf: accept all that matches ipsec policy" ipsec-policy=in,ipsec
+add action=drop chain=input comment=\
+    "defconf: drop everything else not coming from LAN" in-interface-list=\
+    !*2000011
+add action=accept chain=forward comment=\
+    "defconf: accept established,related,untracked" connection-state=\
+    established,related,untracked
+add action=drop chain=forward comment="defconf: drop invalid" \
+    connection-state=invalid
+add action=drop chain=forward comment=\
+    "defconf: drop packets with bad src ipv6" src-address-list=bad_ipv6
+add action=drop chain=forward comment=\
+    "defconf: drop packets with bad dst ipv6" dst-address-list=bad_ipv6
+add action=drop chain=forward comment="defconf: rfc4890 drop hop-limit=1" \
+    hop-limit=equal:1 protocol=icmpv6
+add action=accept chain=forward comment="defconf: accept ICMPv6" protocol=\
+    icmpv6
+add action=accept chain=forward comment="defconf: accept HIP" protocol=139
+add action=accept chain=forward comment="defconf: accept IKE" dst-port=\
+    500,4500 protocol=udp
+add action=accept chain=forward comment="defconf: accept ipsec AH" protocol=\
+    ipsec-ah
+add action=accept chain=forward comment="defconf: accept ipsec ESP" protocol=\
+    ipsec-esp
+add action=accept chain=forward comment=\
+    "defconf: accept all that matches ipsec policy" ipsec-policy=in,ipsec
+add action=drop chain=forward comment=\
+    "defconf: drop everything else not coming from LAN" in-interface-list=\
+    !*2000011
+add action=accept chain=input comment="defconf: accept ICMPv6 after RAW" \
+    protocol=icmpv6
+add action=accept chain=input comment=\
+    "defconf: accept established,related,untracked" connection-state=\
+    established,related,untracked
+add action=accept chain=input comment="defconf: accept UDP traceroute" port=\
+    33434-33534 protocol=udp
+add action=accept chain=input comment=\
+    "defconf: accept DHCPv6-Client prefix delegation." dst-port=546 protocol=\
+    udp src-address=fe80::/16
+add action=accept chain=input comment="defconf: accept IKE" dst-port=500,4500 \
+    protocol=udp
+add action=accept chain=input comment="defconf: accept IPSec AH" protocol=\
+    ipsec-ah
+add action=accept chain=input comment="defconf: accept IPSec ESP" protocol=\
+    ipsec-esp
+add action=drop chain=input comment="defconf: drop all not coming from LAN" \
+    in-interface-list=!LAN
+add action=accept chain=forward comment=\
+    "defconf: accept established,related,untracked" connection-state=\
+    established,related,untracked
+add action=drop chain=forward comment="defconf: drop invalid" \
+    connection-state=invalid
+add action=drop chain=forward comment="defconf: drop bad forward IPs" \
+    src-address-list=no_forward_ipv6
+add action=drop chain=forward comment="defconf: drop bad forward IPs" \
+    dst-address-list=no_forward_ipv6
+add action=drop chain=forward comment="defconf: rfc4890 drop hop-limit=1" \
+    hop-limit=equal:1 protocol=icmpv6
+add action=accept chain=forward comment="defconf: accept ICMPv6 after RAW" \
+    protocol=icmpv6
+add action=accept chain=forward comment="defconf: accept HIP" protocol=139
+add action=accept chain=forward comment="defconf: accept IKE" dst-port=\
+    500,4500 protocol=udp
+add action=accept chain=forward comment="defconf: accept AH" protocol=\
+    ipsec-ah
+add action=accept chain=forward comment="defconf: accept ESP" protocol=\
+    ipsec-esp
+add action=accept chain=forward comment=\
+    "defconf: accept all that matches IPSec policy" ipsec-policy=in,ipsec
+add action=drop chain=forward comment=\
+    "defconf: drop everything else not coming from LAN" in-interface-list=\
+    !LAN
+/ipv6 firewall raw
+add action=accept chain=prerouting comment=\
+    "defconf: enable for transparent firewall" disabled=yes
+add action=accept chain=prerouting comment="defconf: RFC4291, section 2.7.1" \
+    dst-address=ff02::1:ff00:0/104 icmp-options=135 protocol=icmpv6 \
+    src-address=::/128
+add action=drop chain=prerouting comment="defconf: drop bogon IP's" \
+    src-address-list=bad_ipv6
+add action=drop chain=prerouting comment="defconf: drop bogon IP's" \
+    dst-address-list=bad_ipv6
+add action=drop chain=prerouting comment=\
+    "defconf: drop packets with bad SRC ipv6" src-address-list=bad_src_ipv6
+add action=drop chain=prerouting comment=\
+    "defconf: drop packets with bad dst ipv6" dst-address-list=bad_dst_ipv6
+add action=drop chain=prerouting comment="defconf: drop non global from WAN" \
+    in-interface-list=WAN src-address-list=not_global_ipv6
+add action=jump chain=prerouting comment="defconf: jump to ICMPv6 chain" \
+    jump-target=icmp6 protocol=icmpv6
+add action=accept chain=prerouting comment=\
+    "defconf: accept local multicast scope" dst-address=ff02::/16
+add action=drop chain=prerouting comment=\
+    "defconf: drop other multicast destinations" dst-address=ff00::/8
+add action=accept chain=prerouting comment=\
+    "defconf: accept everything else from WAN" in-interface-list=WAN
+add action=accept chain=prerouting comment=\
+    "defconf: accept everything else from LAN" in-interface-list=LAN
+add action=drop chain=prerouting comment="defconf: drop the rest"
+add action=accept chain=icmp6 comment=\
+    "defconf: rfc4890 drop ll if hop-limit!=255" dst-address=fe80::/10 \
+    hop-limit=not-equal:255 protocol=icmpv6
+add action=accept chain=icmp6 comment="defconf: dst unreachable" \
+    icmp-options=1:0-255 protocol=icmpv6
+add action=accept chain=icmp6 comment="defconf: packet too big" icmp-options=\
+    2:0-255 protocol=icmpv6
+add action=accept chain=icmp6 comment="defconf: limit exceeded" icmp-options=\
+    3:0-1 protocol=icmpv6
+add action=accept chain=icmp6 comment="defconf: bad header" icmp-options=\
+    4:0-2 protocol=icmpv6
+add action=accept chain=icmp6 comment=\
+    "defconf: Mobile home agent address discovery" icmp-options=144:0-255 \
+    protocol=icmpv6
+add action=accept chain=icmp6 comment=\
+    "defconf: Mobile home agent address discovery" icmp-options=145:0-255 \
+    protocol=icmpv6
+add action=accept chain=icmp6 comment="defconf: Mobile prefix solic" \
+    icmp-options=146:0-255 protocol=icmpv6
+add action=accept chain=icmp6 comment="defconf: Mobile prefix advert" \
+    icmp-options=147:0-255 protocol=icmpv6
+add action=accept chain=icmp6 comment="defconf: echo request limit 5,10" \
+    icmp-options=128:0-255 limit=5,10:packet protocol=icmpv6
+add action=accept chain=icmp6 comment="defconf: echo reply limit 5,10" \
+    icmp-options=129:0-255 limit=5,10:packet protocol=icmpv6
+add action=accept chain=icmp6 comment=\
+    "defconf: rfc4890 router solic limit 5,10 only LAN" hop-limit=equal:255 \
+    icmp-options=133:0-255 in-interface-list=LAN limit=5,10:packet protocol=\
+    icmpv6
+add action=accept chain=icmp6 comment=\
+    "defconf: rfc4890 router advert limit 5,10 only LAN" hop-limit=equal:255 \
+    icmp-options=134:0-255 in-interface-list=LAN limit=5,10:packet protocol=\
+    icmpv6
+add action=accept chain=icmp6 comment=\
+    "defconf: rfc4890 neighbor solic limit 5,10 only LAN" hop-limit=equal:255 \
+    icmp-options=135:0-255 in-interface-list=LAN limit=5,10:packet protocol=\
+    icmpv6
+add action=accept chain=icmp6 comment=\
+    "defconf: rfc4890 neighbor advert limit 5,10 only LAN" hop-limit=\
+    equal:255 icmp-options=136:0-255 in-interface-list=LAN limit=5,10:packet \
+    protocol=icmpv6
+add action=accept chain=icmp6 comment=\
+    "defconf: rfc4890 inverse ND solic limit 5,10 only LAN" hop-limit=\
+    equal:255 icmp-options=141:0-255 in-interface-list=LAN limit=5,10:packet \
+    protocol=icmpv6
+add action=accept chain=icmp6 comment=\
+    "defconf: rfc4890 inverse ND advert limit 5,10 only LAN" hop-limit=\
+    equal:255 icmp-options=142:0-255 in-interface-list=LAN limit=5,10:packet \
+    protocol=icmpv6
+add action=drop chain=icmp6 comment="defconf: drop other icmp" protocol=\
+    icmpv6
+/routing bfd configuration
+add disabled=no
+/system clock
+set time-zone-name=Europe/Athens
+/system clock manual
+set time-zone=+02:00
+/system identity
+set name=cafe-exohi
+/system logging
+set 1 action=disk
+set 3 action=disk
+/system routerboard settings
+set auto-upgrade=yes
+/system scheduler
+add interval=1d name=reboot on-event="/system reboot" policy=\
+    ftp,reboot,read,write,policy,test,password,sniff,sensitive,romon \
+    start-date=2022-09-15 start-time=05:00:00
+/tool mac-server
+set allowed-interface-list=LAN
+/tool mac-server mac-winbox
+set allowed-interface-list=LAN
